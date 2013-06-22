@@ -28,6 +28,7 @@
 //#define DEBUG_TIMING
 //#define DEBUG_MOUSE
 //#define DEBUG_TIMING2
+//#define DEBUG_KONAMI
 
 ////////////////////////
 // DEFINED CONSTANTS////
@@ -80,6 +81,8 @@ boolean inputChanged;
 
 int mouseHoldCount[NUM_INPUTS]; // used to store mouse movement hold data
 
+byte konamiSequence = 0;
+
 // Pin Numbers
 // input pin numbers for kickstarter production board
 int pinNumbers[NUM_INPUTS] = {
@@ -117,6 +120,8 @@ void addDelay();
 void cycleLEDs();
 void danceLeds();
 void updateOutLEDs();
+void konamiCode();
+
 
 //////////////////////
 // SETUP /////////////
@@ -141,6 +146,7 @@ void loop()
   sendMouseMovementEvents();
   cycleLEDs();
   updateOutLEDs();
+  konamiCode();
   addDelay();
 }
 
@@ -701,6 +707,43 @@ void updateOutLEDs()
   }
 }
 
+void konamiCode()
+{
+  int i;
+  for (i=0; i<NUM_INPUTS; i++)
+  {
+    if (!inputs[i].pressed && inputs[i].prevPressed)
+    {
+      if (
+          (i == 0 && konamiSequence < 2) ||
+          (i == 1 && (konamiSequence == 2 || konamiSequence == 3)) ||
+          (i == 2 && (konamiSequence == 4 || konamiSequence == 6)) ||
+          (i == 3 && (konamiSequence == 5 || konamiSequence == 7)) ||
+          (i == 5 && konamiSequence == 8) ||
+          (i == 4 && konamiSequence == 9)
+         )
+      {
+          konamiSequence++;
+      }
+      else
+      {
+        konamiSequence = 0;
+      }
+#ifdef DEBUG_KONAMI
+       Serial.print("Konami: ");
+       Serial.println(konamiSequence);
+#endif
+    }
+  }
+  if (konamiSequence == 10)
+  {
+#ifdef DEBUG_KONAMI
+         Serial.println("!!! Konami Code !!!");
+#endif
+    konamiSequence = 0;
+    danceLeds();
+  }
+}
 
 
 
